@@ -6,3 +6,4 @@ pymysql
 python-dotenv
 pydantic
 pydantic-settings
+email-validator
