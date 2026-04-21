@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from app.model.userModel.user_model import UserModel
 from app.schema.userSchema.user_schema import UserCreate, UserUpdate, UserFilter, UserResponse, UserListResponse
+from app.utils.security import hash_password
 
 
 def create_user(db: Session, data: UserCreate):
@@ -15,7 +16,7 @@ def create_user(db: Session, data: UserCreate):
             name=data.name,
             email=data.email,
             cpf=data.cpf,
-            password=data.password,
+            password=hash_password(data.password),
         )
         db.add(user)
         db.commit()
@@ -71,7 +72,11 @@ def update_user(db: Session, data: UserUpdate):
         if not user:
             return None, "Usuário não encontrado"
 
-        for field, value in data.model_dump(exclude_none=True, exclude={"user_id"}).items():
+        fields = data.model_dump(exclude_none=True, exclude={"user_id"})
+        if "password" in fields:
+            fields["password"] = hash_password(fields["password"])
+
+        for field, value in fields.items():
             setattr(user, field, value)
 
         db.commit()
