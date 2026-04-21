@@ -15,7 +15,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 from app.model.base import Base
-from app.model.user_model import UserModel
+from app.model.userModel.user_model import UserModel
+from app.model.adressModel.adress_model import AdressModel
 
 target_metadata = Base.metadata
 
