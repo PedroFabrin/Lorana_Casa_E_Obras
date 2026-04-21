@@ -1,6 +1,7 @@
-from sqlalchemy import Column, VARCHAR, TEXT, DECIMAL, Enum, ForeignKey
+from sqlalchemy import Column, VARCHAR, TEXT, DECIMAL, Enum, ForeignKey, DateTime
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from app.model.base import Base
 import enum
 
@@ -21,6 +22,9 @@ class ProductModel(Base):
     sku = Column(VARCHAR(100), nullable=False, unique=True, index=True)
     quantidade_estoque = Column(BIGINT(unsigned=True), nullable=False, default=0)
     status = Column(Enum(ProductStatus), nullable=False, default=ProductStatus.ativo)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
 
     category = relationship("CategoryModel", back_populates="products")
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy.orm import Session
 from app.model.userModel.user_model import UserModel
 from app.schema.userSchema.user_schema import UserCreate, UserUpdate, UserFilter, UserResponse, UserListResponse
@@ -5,9 +6,9 @@ from app.schema.userSchema.user_schema import UserCreate, UserUpdate, UserFilter
 
 def create_user(db: Session, data: UserCreate):
     try:
-        if db.query(UserModel).filter(UserModel.email == data.email).first():
+        if db.query(UserModel).filter(UserModel.email == data.email, UserModel.deleted_at == None).first():
             return None, "E-mail já cadastrado"
-        if db.query(UserModel).filter(UserModel.cpf == data.cpf).first():
+        if db.query(UserModel).filter(UserModel.cpf == data.cpf, UserModel.deleted_at == None).first():
             return None, "CPF já cadastrado"
 
         user = UserModel(
@@ -28,7 +29,7 @@ def create_user(db: Session, data: UserCreate):
 
 def get_user(db: Session, user_id: int):
     try:
-        user = db.query(UserModel).filter(UserModel.id == user_id).first()
+        user = db.query(UserModel).filter(UserModel.id == user_id, UserModel.deleted_at == None).first()
         if not user:
             return None, "Usuário não encontrado"
 
@@ -40,7 +41,7 @@ def get_user(db: Session, user_id: int):
 
 def get_users(db: Session, filters: UserFilter):
     try:
-        query = db.query(UserModel)
+        query = db.query(UserModel).filter(UserModel.deleted_at == None)
 
         if filters.name:
             query = query.filter(UserModel.name.ilike(f"%{filters.name}%"))
@@ -66,7 +67,7 @@ def get_users(db: Session, filters: UserFilter):
 
 def update_user(db: Session, data: UserUpdate):
     try:
-        user = db.query(UserModel).filter(UserModel.id == data.user_id).first()
+        user = db.query(UserModel).filter(UserModel.id == data.user_id, UserModel.deleted_at == None).first()
         if not user:
             return None, "Usuário não encontrado"
 
@@ -84,11 +85,11 @@ def update_user(db: Session, data: UserUpdate):
 
 def delete_user(db: Session, user_id: int):
     try:
-        user = db.query(UserModel).filter(UserModel.id == user_id).first()
+        user = db.query(UserModel).filter(UserModel.id == user_id, UserModel.deleted_at == None).first()
         if not user:
             return None, "Usuário não encontrado"
 
-        db.delete(user)
+        user.deleted_at = datetime.now()
         db.commit()
         return {"status": "success", "message": "Usuário deletado com sucesso"}, None
     except Exception as e:

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, VARCHAR, ForeignKey
+from sqlalchemy import Column, VARCHAR, ForeignKey, DateTime
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from app.model.base import Base
 
 
@@ -14,6 +15,9 @@ class AdressModel(Base):
     cep = Column(VARCHAR(8), nullable=False)
     cidade = Column(VARCHAR(255), nullable=False)
     uf = Column(VARCHAR(2), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime, nullable=True)
 
     user = relationship("UserModel", back_populates="adresses")
 
