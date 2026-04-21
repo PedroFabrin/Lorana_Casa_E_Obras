@@ -1,5 +1,6 @@
 from sqlalchemy import Column, VARCHAR
 from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy.orm import relationship
 from app.model.base import Base
 
 
@@ -11,6 +12,8 @@ class UserModel(Base):
     email = Column(VARCHAR(255), index=True, nullable=False)
     cpf = Column(VARCHAR(11), index=True, nullable=False)
     password = Column(VARCHAR(255), nullable=False)
+
+    adresses = relationship("AdressModel", back_populates="user")
 
     def __init__(self, name, email, cpf, password):
         self.name = name
