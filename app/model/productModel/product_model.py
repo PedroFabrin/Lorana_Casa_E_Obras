@@ -27,6 +27,7 @@ class ProductModel(Base):
     deleted_at = Column(DateTime, nullable=True)
 
     category = relationship("CategoryModel", back_populates="products")
+    images = relationship("ProductImageModel", back_populates="product")
 
     def __init__(self, category_id, nome, preco, sku, quantidade_estoque, status=ProductStatus.ativo, descricao=None):
         self.category_id = category_id
