@@ -5,8 +5,8 @@ from sqlalchemy.sql import func
 from app.model.base import Base
 
 
-class AdressModel(Base):
-    __tablename__ = "adress"
+class AddressModel(Base):
+    __tablename__ = "address"
 
     id = Column(BIGINT(unsigned=True), primary_key=True, autoincrement=True, index=True)
     user_id = Column(BIGINT(unsigned=True), ForeignKey("user.id"), nullable=False, index=True)
@@ -19,7 +19,7 @@ class AdressModel(Base):
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)
 
-    user = relationship("UserModel", back_populates="adresses")
+    user = relationship("UserModel", back_populates="addresses")
 
     def __init__(self, user_id, rua, numero, cep, cidade, uf):
         self.user_id = user_id

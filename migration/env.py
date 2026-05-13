@@ -14,12 +14,7 @@ config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app.model.base import Base
-from app.model.userModel.user_model import UserModel
-from app.model.adressModel.adress_model import AdressModel
-from app.model.categoryModel.category_model import CategoryModel
-from app.model.productModel.product_model import ProductModel
-from app.model.productImageModel.product_image_model import ProductImageModel
+from app.database.connection import Base
 
 target_metadata = Base.metadata
 

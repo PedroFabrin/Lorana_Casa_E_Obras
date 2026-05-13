@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.model.adressModel.adress_model import AdressModel
+from app.model.addressModel.adress_model import AdressModel
 from app.schema.adressSchema.adress_schema import AdressCreate, AdressUpdate, AdressFilter, AdressResponse, AdressListResponse
 
 

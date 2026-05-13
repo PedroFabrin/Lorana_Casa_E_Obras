@@ -6,21 +6,15 @@ from app.model.base import Base
 
 
 class UserModel(Base):
-    __tablename__ = "user"
+    __tablename__ = "users_types"
 
     id = Column(BIGINT(unsigned=True), primary_key=True, autoincrement=True, index=True)
-    name = Column(VARCHAR(255), index=True, nullable=False)
-    email = Column(VARCHAR(255), index=True, nullable=False)
-    cpf = Column(VARCHAR(11), index=True, nullable=False)
-    password = Column(VARCHAR(255), nullable=False)
-    address_id = Column(BIGINT(unsigned=True), ForeignKey("addresses.id"), nullable=False, index=True)
-    user_type_id = Column(BIGINT(unsigned=True), ForeignKey("user_type.id"), nullable=False, index=True)
+    type =  Column(VARCHAR(255), nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)
 
-    addresses = relationship("AddressModel", back_populates="user")
-    user_type = relationship("UserTypeModel", back_populates="user")
+    user = relationship("UserModel", back_populates="user_type")
 
     def __init__(self, name, email, cpf, password):
         self.name = name
