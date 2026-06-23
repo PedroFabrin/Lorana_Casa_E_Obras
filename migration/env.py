@@ -17,9 +17,15 @@ if config.config_file_name is not None:
 from app.model.base import Base
 from app.model.userModel.user_model import UserModel
 from app.model.adressModel.adress_model import AdressModel
+from app.model.sectionModel.section_model import SectionModel
 from app.model.categoryModel.category_model import CategoryModel
 from app.model.productModel.product_model import ProductModel
 from app.model.productImageModel.product_image_model import ProductImageModel
+from app.model.cartModel.cart_model import CartModel
+from app.model.cartItemModel.cart_item_model import CartItemModel
+from app.model.orderModel.order_model import OrderModel
+from app.model.orderItemModel.order_item_model import OrderItemModel
+from app.model.paymentModel.payment_model import PaymentModel
 
 target_metadata = Base.metadata
 

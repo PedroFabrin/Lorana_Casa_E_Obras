@@ -5,6 +5,12 @@ from app.model.categoryModel.category_model import CategoryModel
 from app.schema.productSchema.product_schema import ProductCreate, ProductUpdate, ProductFilter, ProductResponse, ProductListResponse
 
 
+def get_effective_price(product: ProductModel) -> float:
+    if product.preco_promocional is not None and product.preco_promocional < product.preco:
+        return float(product.preco_promocional)
+    return float(product.preco)
+
+
 def create_product(db: Session, data: ProductCreate):
     try:
         if not db.query(CategoryModel).filter(CategoryModel.id == data.category_id, CategoryModel.deleted_at == None).first():
@@ -13,13 +19,20 @@ def create_product(db: Session, data: ProductCreate):
         if db.query(ProductModel).filter(ProductModel.sku == data.sku, ProductModel.deleted_at == None).first():
             return None, "SKU já cadastrado"
 
+        if data.preco_promocional is not None and data.preco_promocional >= data.preco:
+            return None, "Preço promocional deve ser menor que o preço normal"
+
         product = ProductModel(
             category_id=data.category_id,
             nome=data.nome,
             descricao=data.descricao,
             preco=data.preco,
+            preco_promocional=data.preco_promocional,
             sku=data.sku,
             quantidade_estoque=data.quantidade_estoque,
+            estoque_minimo=data.estoque_minimo,
+            peso=data.peso,
+            dimensoes=data.dimensoes,
             status=data.status,
         )
         db.add(product)
@@ -83,6 +96,11 @@ def update_product(db: Session, data: ProductUpdate):
         if "sku" in fields and fields["sku"] != product.sku:
             if db.query(ProductModel).filter(ProductModel.sku == fields["sku"], ProductModel.deleted_at == None).first():
                 return None, "SKU já cadastrado"
+
+        preco = fields.get("preco", float(product.preco))
+        preco_promocional = fields.get("preco_promocional", float(product.preco_promocional) if product.preco_promocional else None)
+        if preco_promocional is not None and preco_promocional >= preco:
+            return None, "Preço promocional deve ser menor que o preço normal"
 
         for field, value in fields.items():
             setattr(product, field, value)

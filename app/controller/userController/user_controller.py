@@ -30,7 +30,7 @@ def list_users(filters: UserFilter, db: Session = Depends(get_db)):
 
 @router.put("/update", response_model=UserResponse)
 def update_user(data: UserUpdate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    result, error = user_service.update_user(db, data)
+    result, error = user_service.update_user(db, data, current_user)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"status": "error", "message": error})
@@ -39,7 +39,7 @@ def update_user(data: UserUpdate, db: Session = Depends(get_db), current_user=De
 
 @router.delete("/delete/{user_id}", status_code=status.HTTP_200_OK)
 def delete_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    result, error = user_service.delete_user(db, user_id)
+    result, error = user_service.delete_user(db, user_id, current_user)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"status": "error", "message": error})

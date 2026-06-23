@@ -19,8 +19,12 @@ class ProductModel(Base):
     nome = Column(VARCHAR(255), nullable=False, index=True)
     descricao = Column(TEXT, nullable=True)
     preco = Column(DECIMAL(10, 2), nullable=False)
+    preco_promocional = Column(DECIMAL(10, 2), nullable=True)
     sku = Column(VARCHAR(100), nullable=False, unique=True, index=True)
     quantidade_estoque = Column(BIGINT(unsigned=True), nullable=False, default=0)
+    estoque_minimo = Column(BIGINT(unsigned=True), nullable=False, default=5)
+    peso = Column(DECIMAL(10, 3), nullable=True)
+    dimensoes = Column(VARCHAR(100), nullable=True)
     status = Column(Enum(ProductStatus), nullable=False, default=ProductStatus.ativo)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
@@ -29,11 +33,16 @@ class ProductModel(Base):
     category = relationship("CategoryModel", back_populates="products")
     images = relationship("ProductImageModel", back_populates="product")
 
-    def __init__(self, category_id, nome, preco, sku, quantidade_estoque, status=ProductStatus.ativo, descricao=None):
+    def __init__(self, category_id, nome, preco, sku, quantidade_estoque, status=ProductStatus.ativo,
+                 descricao=None, preco_promocional=None, estoque_minimo=5, peso=None, dimensoes=None):
         self.category_id = category_id
         self.nome = nome
         self.descricao = descricao
         self.preco = preco
+        self.preco_promocional = preco_promocional
         self.sku = sku
         self.quantidade_estoque = quantidade_estoque
+        self.estoque_minimo = estoque_minimo
+        self.peso = peso
+        self.dimensoes = dimensoes
         self.status = status
