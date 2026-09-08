@@ -21,7 +21,7 @@ def create_adress(data: AdressCreate, db: Session = Depends(get_db), current_use
 
 @router.post("/list", response_model=AdressListResponse)
 def list_adresses(filters: AdressFilter, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    result, error = adress_service.get_adresses(db, filters)
+    result, error = adress_service.get_adresses(db, filters, current_user)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"status": "error", "message": error})
@@ -30,7 +30,7 @@ def list_adresses(filters: AdressFilter, db: Session = Depends(get_db), current_
 
 @router.put("/update", response_model=AdressResponse)
 def update_adress(data: AdressUpdate, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    result, error = adress_service.update_adress(db, data)
+    result, error = adress_service.update_adress(db, data, current_user)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"status": "error", "message": error})
@@ -39,7 +39,7 @@ def update_adress(data: AdressUpdate, db: Session = Depends(get_db), current_use
 
 @router.delete("/delete/{adress_id}", status_code=status.HTTP_200_OK)
 def delete_adress(adress_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    result, error = adress_service.delete_adress(db, adress_id)
+    result, error = adress_service.delete_adress(db, adress_id, current_user)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"status": "error", "message": error})

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schema.productSchema.product_schema import ProductCreate, ProductUpdate, ProductFilter, ProductResponse, ProductListResponse
 from app.service.productService import product_service
-from app.utils.auth import get_current_user, get_current_admin
+from app.utils.auth import get_current_admin
 
 router = APIRouter(prefix="/product", tags=["Product"])
 
@@ -19,7 +19,7 @@ def create_product(data: ProductCreate, db: Session = Depends(get_db), current_u
 
 
 @router.post("/list", response_model=ProductListResponse)
-def list_products(filters: ProductFilter, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def list_products(filters: ProductFilter, db: Session = Depends(get_db)):
     result, error = product_service.get_products(db, filters)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
@@ -28,7 +28,7 @@ def list_products(filters: ProductFilter, db: Session = Depends(get_db), current
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
-def get_product(product_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def get_product(product_id: int, db: Session = Depends(get_db)):
     result, error = product_service.get_product(db, product_id)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,

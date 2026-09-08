@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
 from app.model.adressModel.adress_model import AdressModel
+from app.model.userModel.user_model import UserModel, UserRole
 from app.schema.adressSchema.adress_schema import AdressCreate, AdressUpdate, AdressFilter, AdressResponse, AdressListResponse
 
 
@@ -40,11 +41,13 @@ def get_adress(db: Session, adress_id: int):
         return None, str(e)
 
 
-def get_adresses(db: Session, filters: AdressFilter):
+def get_adresses(db: Session, filters: AdressFilter, current_user: UserModel):
     try:
         query = db.query(AdressModel).filter(AdressModel.deleted_at == None)
 
-        if filters.user_id:
+        if current_user.role != UserRole.admin:
+            query = query.filter(AdressModel.user_id == current_user.id)
+        elif filters.user_id:
             query = query.filter(AdressModel.user_id == filters.user_id)
         if filters.cidade:
             query = query.filter(AdressModel.cidade.ilike(f"%{filters.cidade}%"))
@@ -68,11 +71,13 @@ def get_adresses(db: Session, filters: AdressFilter):
         return None, str(e)
 
 
-def update_adress(db: Session, data: AdressUpdate):
+def update_adress(db: Session, data: AdressUpdate, current_user: UserModel):
     try:
         adress = db.query(AdressModel).filter(AdressModel.id == data.adress_id, AdressModel.deleted_at == None).first()
         if not adress:
             return None, "Endereço não encontrado"
+        if current_user.role != UserRole.admin and adress.user_id != current_user.id:
+            return None, "Acesso negado"
 
         fields = data.model_dump(exclude_none=True, exclude={"adress_id"})
         if "cep" in fields:
@@ -92,11 +97,13 @@ def update_adress(db: Session, data: AdressUpdate):
         return None, str(e)
 
 
-def delete_adress(db: Session, adress_id: int):
+def delete_adress(db: Session, adress_id: int, current_user: UserModel):
     try:
         adress = db.query(AdressModel).filter(AdressModel.id == adress_id, AdressModel.deleted_at == None).first()
         if not adress:
             return None, "Endereço não encontrado"
+        if current_user.role != UserRole.admin and adress.user_id != current_user.id:
+            return None, "Acesso negado"
 
         adress.deleted_at = datetime.now()
         db.commit()

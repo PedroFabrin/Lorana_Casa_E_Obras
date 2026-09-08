@@ -250,6 +250,7 @@ existente no carrinho) exceder o estoque disponível.
 | GET | `/order/{order_id}` | autenticado | dono do pedido ou admin |
 | PUT | `/order/update-status` | admin | `{ order_id, status }` |
 | POST | `/order/{order_id}/confirm-payment` | admin | `{ aprovado: true\|false }` |
+| POST | `/order/webhook/mercadopago` | público (Mercado Pago) | notificação de pagamento; não usado pelo front |
 
 `status` do pedido (`OrderStatus`): `pendente`, `pago`, `em_separacao`, `enviado`, `entregue`,
 `cancelado`, `nao_aprovado`.
@@ -263,18 +264,37 @@ enviado       → entregue | cancelado
 entregue, cancelado, nao_aprovado → (finais, sem transição)
 ```
 
-Comportamento do checkout por `forma_pagamento` (gateway hoje é **mock**, ver seção 5):
-- `cartao` ou `pix` → aprovado imediatamente. Pedido nasce com `status: pago`, estoque já decrementado.
-- `boleto` → fica `status: pendente` até um admin chamar `confirm-payment` (simula o webhook do
-  gateway real). Enquanto pendente, o estoque **não** é decrementado.
+Comportamento do checkout depende do gateway ativo (`PAYMENT_GATEWAY` no `.env`, ver seção 5):
 
-Resposta (`OrderResponse`):
+- **`mock`** (padrão, sem credenciais): `cartao`/`pix` aprovam imediatamente (`status: pago`,
+  estoque já decrementado); `boleto` fica `pendente` até um admin chamar `confirm-payment`.
+- **`mercadopago`** (real): o pedido é criado como `pendente` e a resposta traz `payment.gateway:
+  "mercadopago"` e um campo extra **`checkout_url`** — a URL de Checkout Pro do Mercado Pago. O
+  front deve abrir essa URL na modal/tela de pagamento do Mercado Pago (SDK JS `mp.checkout({
+  preference: { id: payment.transaction_id }, autoOpen: true })` ou redirecionamento simples). A
+  confirmação real do pagamento chega depois, de forma assíncrona, via webhook direto do Mercado
+  Pago para a API — o front deve fazer polling em `GET /order/{order_id}` (ou aguardar o
+  `back_urls.success` configurado) até o `status` mudar de `pendente` para `pago`/`nao_aprovado`.
+
+Resposta (`OrderResponse`) com gateway mock:
 ```json
 {
   "id": 1, "user_id": 5, "adress_id": 2, "status": "pago",
   "subtotal": 100.0, "desconto": 0.0, "total": 100.0, "created_at": "...",
   "items": [{ "id": 1, "product_id": 3, "product_nome": "Tubo PVC 100mm", "quantidade": 2, "preco_unitario": 50.0, "subtotal": 100.0 }],
-  "payment": { "id": 1, "gateway": "mock", "forma_pagamento": "cartao", "status": "aprovado", "transaction_id": "mock_...", "valor": 100.0 }
+  "payment": { "id": 1, "gateway": "mock", "forma_pagamento": "cartao", "status": "aprovado", "transaction_id": "mock_...", "valor": 100.0 },
+  "checkout_url": null
+}
+```
+
+Resposta com gateway `mercadopago`:
+```json
+{
+  "id": 1, "user_id": 5, "adress_id": 2, "status": "pendente",
+  "subtotal": 100.0, "desconto": 0.0, "total": 100.0, "created_at": "...",
+  "items": [{ "id": 1, "product_id": 3, "product_nome": "Tubo PVC 100mm", "quantidade": 2, "preco_unitario": 50.0, "subtotal": 100.0 }],
+  "payment": { "id": 1, "gateway": "mercadopago", "forma_pagamento": "cartao", "status": "pendente", "transaction_id": "<preference_id>", "valor": 100.0 },
+  "checkout_url": "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=..."
 }
 ```
 
@@ -299,11 +319,14 @@ Sem `status` informado, o relatório considera apenas pedidos pagos/em andamento
 O front deve saber disso para não montar telas que dependam de comportamento real ainda não
 implementado:
 
-- **Gateway de pagamento**: não há integração real com Mercado Pago. O backend usa um adapter mock
-  (`PAYMENT_GATEWAY=mock` no `.env`) que aprova cartão/PIX de imediato e deixa boleto pendente. A
-  tela de pagamento pode ser construída normalmente (escolha da forma de pagamento), mas não há
-  redirecionamento real para um gateway externo nem captura de dados de cartão — o checkout é
-  resolvido inteiramente pela própria API.
+- **Gateway de pagamento**: existe integração real com Mercado Pago (Checkout Pro), mas ela só fica
+  ativa quando `PAYMENT_GATEWAY=mercadopago` e as credenciais (`MERCADOPAGO_ACCESS_TOKEN`,
+  `MERCADOPAGO_WEBHOOK_SECRET`, etc.) estiverem preenchidas no `.env` — ainda não temos essas
+  credenciais de teste do Mercado Pago, então em produção o gateway continua como `mock` (aprova
+  cartão/PIX de imediato, deixa boleto pendente) até isso ser configurado. Quando o gateway real
+  estiver ativo, o checkout devolve um `checkout_url` (ver seção 4) que o front abre na modal do
+  Mercado Pago; a confirmação chega depois via webhook (`POST /order/webhook/mercadopago`, sem
+  autenticação, chamado pelo próprio Mercado Pago).
 - **E-mails** (confirmação de pedido, alerta de estoque baixo): apenas logados no servidor, não
   enviados de fato. Não há tela ou endpoint de "reenviar e-mail" hoje.
 - **Frete**: não existe cálculo de frete (fora do escopo da ERS atual). O campo `total` do pedido é

@@ -19,8 +19,8 @@ def create_user(data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/list", response_model=UserListResponse)
-def list_users(filters: UserFilter, db: Session = Depends(get_db)):
-    result, error = user_service.get_users(db, filters)
+def list_users(filters: UserFilter, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    result, error = user_service.get_users(db, filters, current_user)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"status": "error", "message": error})

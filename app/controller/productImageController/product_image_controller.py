@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schema.productImageSchema.product_image_schema import ProductImageCreate, ProductImageUpdate, ProductImageFilter
 from app.service.productImageService import product_image_service
-from app.utils.auth import get_current_user, get_current_admin
+from app.utils.auth import get_current_admin
 
 router = APIRouter(prefix="/product-image", tags=["ProductImage"])
 
@@ -19,7 +19,7 @@ def create_product_image(data: ProductImageCreate, db: Session = Depends(get_db)
 
 
 @router.post("/list", status_code=status.HTTP_200_OK)
-def list_product_images(filters: ProductImageFilter, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def list_product_images(filters: ProductImageFilter, db: Session = Depends(get_db)):
     result, error = product_image_service.get_product_images(db, filters)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,

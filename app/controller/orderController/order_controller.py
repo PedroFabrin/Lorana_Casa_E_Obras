@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -21,6 +21,21 @@ def checkout(data: OrderCheckout, db: Session = Depends(get_db), current_user=De
 @router.post("/list", response_model=OrderListResponse)
 def list_orders(filters: OrderFilter, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     result, error = order_service.list_orders(db, current_user, filters)
+    if error:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"status": "error", "message": error})
+    return JSONResponse(status_code=status.HTTP_200_OK, content=result)
+
+
+@router.post("/webhook/mercadopago", status_code=status.HTTP_200_OK)
+async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    result, error = order_service.handle_mercadopago_webhook(
+        db, query_params=request.query_params, headers=request.headers, body=body,
+    )
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"status": "error", "message": error})

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schema.sectionSchema.section_schema import SectionCreate, SectionUpdate, SectionFilter, SectionResponse, SectionListResponse
 from app.service.sectionService import section_service
-from app.utils.auth import get_current_user, get_current_admin
+from app.utils.auth import get_current_admin
 
 router = APIRouter(prefix="/section", tags=["Section"])
 
@@ -19,7 +19,7 @@ def create_section(data: SectionCreate, db: Session = Depends(get_db), current_u
 
 
 @router.post("/list", response_model=SectionListResponse)
-def list_sections(filters: SectionFilter, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def list_sections(filters: SectionFilter, db: Session = Depends(get_db)):
     result, error = section_service.get_sections(db, filters)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
@@ -28,7 +28,7 @@ def list_sections(filters: SectionFilter, db: Session = Depends(get_db), current
 
 
 @router.get("/{section_id}", response_model=SectionResponse)
-def get_section(section_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def get_section(section_id: int, db: Session = Depends(get_db)):
     result, error = section_service.get_section(db, section_id)
     if error:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,

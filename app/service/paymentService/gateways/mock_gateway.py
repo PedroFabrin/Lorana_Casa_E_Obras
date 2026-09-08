@@ -1,6 +1,6 @@
 import uuid
 from app.model.paymentModel.payment_model import PaymentStatus
-from app.service.paymentService.gateways.base import PaymentGateway
+from app.service.paymentService.gateways.base import PaymentGateway, PaymentResult
 
 
 class MockPaymentGateway(PaymentGateway):
@@ -10,8 +10,8 @@ class MockPaymentGateway(PaymentGateway):
     (ver order_service.confirm_payment), espelhando o comportamento típico desses meios de pagamento.
     """
 
-    def process_payment(self, order, forma_pagamento: str) -> tuple[PaymentStatus, str | None]:
+    def process_payment(self, order, forma_pagamento: str) -> PaymentResult:
         transaction_id = f"mock_{uuid.uuid4().hex[:16]}"
         if forma_pagamento == "boleto":
-            return PaymentStatus.pendente, transaction_id
-        return PaymentStatus.aprovado, transaction_id
+            return PaymentResult(PaymentStatus.pendente, transaction_id)
+        return PaymentResult(PaymentStatus.aprovado, transaction_id)

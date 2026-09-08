@@ -6,7 +6,7 @@ from app.model.cartItemModel.cart_item_model import CartItemModel
 from app.model.productModel.product_model import ProductModel, ProductStatus
 from app.model.orderModel.order_model import OrderModel, OrderStatus
 from app.model.orderItemModel.order_item_model import OrderItemModel
-from app.model.paymentModel.payment_model import PaymentModel, PaymentStatus
+from app.model.paymentModel.payment_model import PaymentModel, PaymentStatus, PaymentGatewayEnum
 from app.model.userModel.user_model import UserModel, UserRole
 from app.schema.orderSchema.order_schema import (
     OrderCheckout, OrderFilter, OrderUpdateStatus,
@@ -139,20 +139,21 @@ def checkout(db: Session, user: UserModel, data: OrderCheckout):
         db.commit()
         db.refresh(order)
 
-        gateway_name, payment_status, transaction_id = payment_service.process_payment(order, data.forma_pagamento)
+        gateway_name, payment_result = payment_service.process_payment(order, data.forma_pagamento)
         payment.gateway = gateway_name
-        payment.transaction_id = transaction_id
+        payment.transaction_id = payment_result.transaction_id
         db.commit()
 
-        _apply_payment_result(db, order, payment, payment_status)
+        _apply_payment_result(db, order, payment, payment_result.status)
 
-        if payment_status != PaymentStatus.recusado:
+        if payment_result.status != PaymentStatus.recusado:
             for cart_item in cart_items:
                 cart_item.deleted_at = datetime.now()
             db.commit()
 
         db.refresh(order)
         result = _build_order_response(order)
+        result.checkout_url = payment_result.checkout_url
         return {"status": "success", "data": result.model_dump(mode='json')}, None
     except Exception as e:
         return None, str(e)
@@ -172,6 +173,39 @@ def confirm_payment(db: Session, order_id: int, aprovado: bool):
         db.refresh(order)
         result = _build_order_response(order)
         return {"status": "success", "data": result.model_dump(mode='json')}, None
+    except Exception as e:
+        return None, str(e)
+
+
+def handle_mercadopago_webhook(db: Session, query_params, headers, body: dict):
+    try:
+        data_id = query_params.get("data.id") or (body or {}).get("data", {}).get("id")
+        notification_type = query_params.get("type") or (body or {}).get("type")
+        if notification_type != "payment" or not data_id:
+            return {"status": "success"}, None
+
+        gateway = payment_service.get_gateway(PaymentGatewayEnum.mercadopago)
+
+        x_signature = headers.get("x-signature")
+        x_request_id = headers.get("x-request-id")
+        if not gateway.verify_notification_signature(x_signature, x_request_id, str(data_id)):
+            return None, "Assinatura do webhook inválida"
+
+        mp_status, external_reference, real_payment_id = gateway.get_payment_status(data_id)
+        if not external_reference:
+            return None, "external_reference ausente no pagamento"
+
+        order = db.query(OrderModel).filter(
+            OrderModel.id == int(external_reference), OrderModel.deleted_at == None,
+        ).first()
+        if not order or not order.payment:
+            return None, "Pedido não encontrado"
+
+        if order.payment.status == PaymentStatus.pendente:
+            order.payment.transaction_id = real_payment_id
+            _apply_payment_result(db, order, order.payment, mp_status)
+
+        return {"status": "success"}, None
     except Exception as e:
         return None, str(e)
 

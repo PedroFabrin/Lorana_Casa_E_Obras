@@ -40,18 +40,21 @@ def get_user(db: Session, user_id: int):
         return None, str(e)
 
 
-def get_users(db: Session, filters: UserFilter):
+def get_users(db: Session, filters: UserFilter, current_user: UserModel):
     try:
         query = db.query(UserModel).filter(UserModel.deleted_at == None)
 
-        if filters.name:
-            query = query.filter(UserModel.name.ilike(f"%{filters.name}%"))
-        if filters.email:
-            query = query.filter(UserModel.email.ilike(f"%{filters.email}%"))
-        if filters.cpf:
-            query = query.filter(UserModel.cpf == filters.cpf)
-        if filters.role:
-            query = query.filter(UserModel.role == filters.role)
+        if current_user.role != UserRole.admin:
+            query = query.filter(UserModel.id == current_user.id)
+        else:
+            if filters.name:
+                query = query.filter(UserModel.name.ilike(f"%{filters.name}%"))
+            if filters.email:
+                query = query.filter(UserModel.email.ilike(f"%{filters.email}%"))
+            if filters.cpf:
+                query = query.filter(UserModel.cpf == filters.cpf)
+            if filters.role:
+                query = query.filter(UserModel.role == filters.role)
 
         total = query.count()
         offset = (filters.page - 1) * filters.page_size

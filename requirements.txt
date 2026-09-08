@@ -9,3 +9,4 @@ pydantic-settings
 email-validator
 bcrypt
 python-jose[cryptography]
+mercadopago

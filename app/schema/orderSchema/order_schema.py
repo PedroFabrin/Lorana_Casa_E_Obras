@@ -60,6 +60,7 @@ class OrderResponse(BaseModel):
     created_at: datetime
     items: list[OrderItemResponse]
     payment: Optional[PaymentResponse] = None
+    checkout_url: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
