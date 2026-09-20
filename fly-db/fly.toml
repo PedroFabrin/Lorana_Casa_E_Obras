@@ -1,0 +1,14 @@
+app = "lorana-db"
+primary_region = "gru"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[[mounts]]
+  source = "mariadb_data"
+  destination = "/data"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
