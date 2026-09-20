@@ -42,6 +42,19 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
     return JSONResponse(status_code=status.HTTP_200_OK, content=result)
 
 
+@router.post("/webhook/infinitepay", status_code=status.HTTP_200_OK)
+async def infinitepay_webhook(request: Request, db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    result, error = order_service.handle_infinitepay_webhook(db, body=body)
+    if error:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"status": "error", "message": error})
+    return JSONResponse(status_code=status.HTTP_200_OK, content=result)
+
+
 @router.get("/{order_id}", response_model=OrderResponse)
 def get_order(order_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     result, error = order_service.get_order(db, order_id, current_user)

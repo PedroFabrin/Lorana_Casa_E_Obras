@@ -2,10 +2,12 @@ import os
 from app.model.paymentModel.payment_model import PaymentGatewayEnum
 from app.service.paymentService.gateways.mock_gateway import MockPaymentGateway
 from app.service.paymentService.gateways.mercadopago_gateway import MercadoPagoGateway
+from app.service.paymentService.gateways.infinitepay_gateway import InfinitePayGateway
 
 _GATEWAYS = {
     PaymentGatewayEnum.mock: MockPaymentGateway(),
     PaymentGatewayEnum.mercadopago: MercadoPagoGateway(),
+    PaymentGatewayEnum.infinitepay: InfinitePayGateway(),
 }
 
 

@@ -210,6 +210,35 @@ def handle_mercadopago_webhook(db: Session, query_params, headers, body: dict):
         return None, str(e)
 
 
+def handle_infinitepay_webhook(db: Session, body: dict):
+    try:
+        order_nsu = (body or {}).get("order_nsu")
+        slug = (body or {}).get("invoice_slug")
+        transaction_nsu = (body or {}).get("transaction_nsu")
+        if not order_nsu or not slug or not transaction_nsu:
+            return None, "Payload de webhook incompleto"
+
+        order = db.query(OrderModel).filter(
+            OrderModel.id == int(order_nsu), OrderModel.deleted_at == None,
+        ).first()
+        if not order or not order.payment:
+            return None, "Pedido não encontrado"
+
+        if order.payment.status == PaymentStatus.pendente:
+            gateway = payment_service.get_gateway(PaymentGatewayEnum.infinitepay)
+            check = gateway.check_payment(order_nsu, transaction_nsu, slug)
+            if not check.get("success"):
+                return None, "Não foi possível confirmar o pagamento na InfinitePay"
+
+            payment_status = PaymentStatus.aprovado if check.get("paid") else PaymentStatus.pendente
+            order.payment.transaction_id = transaction_nsu
+            _apply_payment_result(db, order, order.payment, payment_status)
+
+        return {"status": "success"}, None
+    except Exception as e:
+        return None, str(e)
+
+
 def get_order(db: Session, order_id: int, current_user: UserModel):
     try:
         order = db.query(OrderModel).filter(OrderModel.id == order_id, OrderModel.deleted_at == None).first()

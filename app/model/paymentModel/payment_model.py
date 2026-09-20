@@ -9,6 +9,7 @@ import enum
 class PaymentGatewayEnum(enum.Enum):
     mock = "mock"
     mercadopago = "mercadopago"
+    infinitepay = "infinitepay"
 
 
 class PaymentStatus(enum.Enum):
