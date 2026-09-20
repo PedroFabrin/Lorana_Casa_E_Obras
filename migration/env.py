@@ -26,6 +26,7 @@ from app.model.cartItemModel.cart_item_model import CartItemModel
 from app.model.orderModel.order_model import OrderModel
 from app.model.orderItemModel.order_item_model import OrderItemModel
 from app.model.paymentModel.payment_model import PaymentModel
+from app.model.revokedTokenModel.revoked_token_model import RevokedTokenModel
 
 target_metadata = Base.metadata
 
